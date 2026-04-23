@@ -1,0 +1,121 @@
+; practice4.asm
+; Мова: i386 (32-bit)
+; Вхід: рядок з консолі (число 0...999999)
+; Вихід: це число надруковане назад на консолі
+; Збірка: nasm -f elf32 practice4.asm -o practice4.o
+; Лінкування: ld -m elf_i386 practice4.o -o practice4
+
+global _start
+
+section .bss
+    input_buffer  resb 12     ; буфер для введення (максимум 6 цифр + '\n' + запас)
+    output_buffer resb 12     ; буфер для виведення
+
+section .data
+    newline db 10
+
+section .text
+_start:
+    ; =============================================
+    ; I/O: читання рядка з консолі (sys_read)
+    ; =============================================
+    mov eax, 3                ; syscall: sys_read
+    mov ebx, 0                ; stdin
+    mov ecx, input_buffer
+    mov edx, 11               ; максимум 11 байт
+    int 0x80
+
+    ; =============================================
+    ; parse: конвертація ASCII рядка в число (в AX)
+    ; =============================================
+    mov esi, input_buffer     ; вказівник на введений рядок
+    xor eax, eax              ; число = 0
+    xor ebx, ebx              ; тимчасовий регістр для цифри
+
+parse_loop:
+    mov bl, [esi]             ; беремо поточний символ
+    cmp bl, 10                ; '\n' ?
+    je parse_done
+    cmp bl, 0                 ; кінець рядка?
+    je parse_done
+
+    ; logic: перевіряємо, чи це цифра
+    cmp bl, '0'
+    jb parse_done
+    cmp bl, '9'
+    ja parse_done
+
+    ; math: число = число * 10 + (цифра - '0')
+    imul eax, eax, 10         ; eax *= 10
+    sub bl, '0'
+    add eax, ebx
+
+    inc esi                   ; наступний символ
+    jmp parse_loop
+
+parse_done:
+    ; обмежуємо до 999999 (якщо більше — обрізаємо)
+    cmp eax, 999999
+    jbe number_ok
+    mov eax, 999999
+
+number_ok:
+    movzx ecx, ax             ; зберігаємо число в ECX для подальшого використання
+
+    ; =============================================
+    ; memory: підготовка буфера для виведення
+    ; =============================================
+    mov edi, output_buffer
+    add edi, 10               ; починаємо з кінця буфера
+    mov byte [edi], 10        ; додаємо '\n'
+    dec edi
+
+    ; =============================================
+    ; math + loops: конвертація числа з ECX назад в ASCII
+    ; =============================================
+    mov eax, ecx              ; відновлюємо число в EAX
+    cmp eax, 0
+    jne convert_loop
+
+    ; спеціальний випадок: число 0
+    mov byte [edi], '0'
+    dec edi
+    jmp print_result
+
+convert_loop:
+    mov ebx, 10
+    xor edx, edx
+    div ebx                   ; EAX /= 10, EDX = остача
+
+    add dl, '0'
+    mov [edi], dl
+    dec edi
+
+    test eax, eax
+    jnz convert_loop
+
+print_result:
+    ; =============================================
+    ; I/O: підготовка до sys_write
+    ; =============================================
+    inc edi                   ; EDI вказує на початок числа
+    mov ecx, edi              ; адреса рядка для виведення
+
+    ; обчислюємо довжину
+    mov edx, output_buffer
+    add edx, 11
+    sub edx, ecx              ; EDX = довжина (включаючи '\n')
+
+    ; =============================================
+    ; I/O: вивід через sys_write
+    ; =============================================
+    mov eax, 4                ; syscall: sys_write
+    mov ebx, 1                ; stdout
+    int 0x80
+
+    ; =============================================
+    ; I/O: завершення програми
+    ; =============================================
+    mov eax, 1                ; syscall: sys_exit
+    xor ebx, ebx
+    int 0x80
