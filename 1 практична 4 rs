@@ -1,0 +1,31 @@
+// rust-practice/04_ownership/ownership.rs
+
+fn main() {
+    // Ownership move
+    let s1 = String::from("hello");
+    let s2 = s1;           // s1 більше не валідний (move)
+    // println!("{}", s1); // помилка!
+    println!("s2 = {}", s2);
+
+    // Clone (глибока копія)
+    let s3 = String::from("world");
+    let s4 = s3.clone();
+    println!("s3 = {}, s4 = {}", s3, s4);
+
+    // Borrowing (references)
+    let s5 = String::from("rust");
+    print_length(&s5);     // immutable borrow
+    println!("s5 after borrow: {}", s5);
+
+    let mut s6 = String::from("mutable");
+    change_string(&mut s6);
+    println!("s6 after change: {}", s6);
+}
+
+fn print_length(s: &String) {
+    println!("The length of '{}' is {}.", s, s.len());
+}
+
+fn change_string(s: &mut String) {
+    s.push_str(" string!");
+}
