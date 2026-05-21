@@ -1,0 +1,344 @@
+section .data
+    ; I/O strings
+    signed_str db "SIGNED: ", 0
+    unsigned_str db "UNSIGNED: ", 0
+    less_str db "a < b", 0
+    eq_str db "a = b", 0
+    greater_str db "a > b", 0
+    newline db 10, 0
+    space db " ", 0
+    max_signed_msg db "max_signed: ", 0
+    max_unsigned_msg db "max_unsigned: ", 0
+
+section .bss
+    input_buf resb 32
+    a resd 1
+    b resd 1
+    num_buffer resb 16   ; для перетворення чисел у рядок
+
+section .text
+global _start
+
+; =============================================
+; Підпрограма: str_to_int
+; esi - вказівник на рядок
+; повертає: eax = число (signed)
+; esi просувається вперед
+; =============================================
+str_to_int:
+    push ebx
+    push ecx
+    push edx
+
+    xor eax, eax
+    xor ebx, ebx
+    mov ecx, 1          ; знак: 1 = positive, -1 = negative
+
+    ; пропустити пробіли
+.skip_spaces:
+    cmp byte [esi], ' '
+    jne .check_sign
+    inc esi
+    jmp .skip_spaces
+
+.check_sign:
+    cmp byte [esi], '-'
+    jne .parse_digits
+    mov ecx, -1
+    inc esi
+
+.parse_digits:
+    movzx edx, byte [esi]
+    cmp edx, '0'
+    jl .done_parse
+    cmp edx, '9'
+    jg .done_parse
+
+    imul eax, 10
+    sub edx, '0'
+    add eax, edx
+    inc esi
+    jmp .parse_digits
+
+.done_parse:
+    imul eax, ecx       ; застосувати знак
+
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+; =============================================
+; Підпрограма: print_signed
+; eax - число (signed)
+; =============================================
+print_signed:
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+
+    mov esi, num_buffer + 15
+    mov byte [esi], 0
+    dec esi
+
+    mov ebx, 10
+    test eax, eax
+    jns .positive
+
+    ; негативне
+    neg eax
+    push eax
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, minus_char
+    mov edx, 1
+    int 0x80
+    pop eax
+
+.positive:
+    test eax, eax
+    jnz .loop_convert
+    mov byte [esi], '0'
+    dec esi
+    jmp .print_it
+
+.loop_convert:
+    xor edx, edx
+    div ebx
+    add dl, '0'
+    mov [esi], dl
+    dec esi
+    test eax, eax
+    jnz .loop_convert
+
+.print_it:
+    inc esi
+    ; знайти довжину
+    push esi
+    mov ecx, esi
+.length_loop:
+    cmp byte [ecx], 0
+    je .print
+    inc ecx
+    jmp .length_loop
+
+.print:
+    sub ecx, esi
+    mov eax, 4
+    mov ebx, 1
+    ; ecx вже = довжина
+    int 0x80
+
+    pop esi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+minus_char db '-'
+
+; =============================================
+; Підпрограма: print_unsigned
+; eax - число (unsigned)
+; =============================================
+print_unsigned:
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+
+    mov esi, num_buffer + 15
+    mov byte [esi], 0
+    dec esi
+
+    mov ebx, 10
+    test eax, eax
+    jnz .loop_convert_u
+    mov byte [esi], '0'
+    dec esi
+    jmp .print_u
+
+.loop_convert_u:
+    xor edx, edx
+    div ebx
+    add dl, '0'
+    mov [esi], dl
+    dec esi
+    test eax, eax
+    jnz .loop_convert_u
+
+.print_u:
+    inc esi
+    push esi
+    mov ecx, esi
+.len_loop_u:
+    cmp byte [ecx], 0
+    je .do_print_u
+    inc ecx
+    jmp .len_loop_u
+
+.do_print_u:
+    sub ecx, esi
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop esi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+; =============================================
+; print_string
+; esi - вказівник на null-terminated строку
+; =============================================
+print_string:
+    push eax
+    push ebx
+    push ecx
+    push edx
+
+    mov ecx, esi
+    xor edx, edx
+.str_len:
+    cmp byte [ecx], 0
+    je .print_str
+    inc ecx
+    inc edx
+    jmp .str_len
+
+.print_str:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+; =============================================
+; cmp_signed
+; ebx = a, ecx = b
+; виводить відповідний текст
+; =============================================
+cmp_signed:
+    cmp ebx, ecx
+    je .eq_s
+    jl .less_s
+    ; greater
+    mov esi, greater_str
+    call print_string
+    ret
+.less_s:
+    mov esi, less_str
+    call print_string
+    ret
+.eq_s:
+    mov esi, eq_str
+    call print_string
+    ret
+
+; =============================================
+; cmp_unsigned
+; ebx = a, ecx = b  (трактуємо як unsigned)
+; =============================================
+cmp_unsigned:
+    cmp ebx, ecx
+    je .eq_u
+    jb .less_u
+    ; above
+    mov esi, greater_str
+    call print_string
+    ret
+.less_u:
+    mov esi, less_str
+    call print_string
+    ret
+.eq_u:
+    mov esi, eq_str
+    call print_string
+    ret
+
+_start:
+    ; ==================== I/O ====================
+    mov eax, 3          ; sys_read
+    mov ebx, 0          ; stdin
+    mov ecx, input_buf
+    mov edx, 31
+    int 0x80
+
+    ; ==================== parse ====================
+    mov esi, input_buf
+    call str_to_int
+    mov [a], eax
+
+    ; наступне число
+    call str_to_int
+    mov [b], eax
+
+    mov ebx, [a]
+    mov ecx, [b]
+
+    ; ==================== logic ====================
+    ; 1. SIGNED comparison
+    mov esi, signed_str
+    call print_string
+    call cmp_signed
+    mov esi, newline
+    call print_string
+
+    ; 2. UNSIGNED comparison
+    mov esi, unsigned_str
+    call print_string
+    call cmp_unsigned
+    mov esi, newline
+    call print_string
+
+    ; 3. max_signed
+    mov esi, max_signed_msg
+    call print_string
+
+    mov ebx, [a]
+    mov ecx, [b]
+    cmp ebx, ecx
+    jg .a_bigger_s
+    mov eax, ecx
+    jmp .print_max_s
+.a_bigger_s:
+    mov eax, ebx
+.print_max_s:
+    call print_signed
+    mov esi, newline
+    call print_string
+
+    ; 4. max_unsigned
+    mov esi, max_unsigned_msg
+    call print_string
+
+    mov ebx, [a]
+    mov ecx, [b]
+    cmp ebx, ecx
+    ja .a_bigger_u
+    mov eax, ecx
+    jmp .print_max_u
+.a_bigger_u:
+    mov eax, ebx
+.print_max_u:
+    call print_unsigned
+    mov esi, newline
+    call print_string
+
+    ; ==================== exit ====================
+    mov eax, 1
+    mov ebx, 0
+    int 0x80
