@@ -1,0 +1,293 @@
+section .data
+    prompt_n db 'n: ', 0
+    prompt_n_len equ $ - prompt_n
+    space db ' ', 0
+    newline db 10, 0
+    orig_msg db 'Before: ', 0
+    orig_len equ $ - orig_msg
+    sort_msg db 'After:  ', 0
+    sort_len equ $ - sort_msg
+    median_msg db 'Median: ', 0
+    median_len equ $ - median_msg
+
+section .bss
+    input_buf resb 1024
+    num_buf   resd 101          ; n <= 100
+    n         resd 1
+
+section .text
+global _start
+
+_start:
+    ; ========================================
+    ; I/O + parse n
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, prompt_n
+    mov edx, prompt_n_len
+    int 0x80
+
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, input_buf
+    mov edx, 1024
+    int 0x80
+
+    mov esi, input_buf
+    xor eax, eax
+parse_n:
+    mov bl, [esi]
+    cmp bl, 10
+    je parse_n_done
+    cmp bl, ' '
+    je parse_n_done
+    sub bl, '0'
+    imul eax, eax, 10
+    add eax, ebx
+    inc esi
+    jmp parse_n
+parse_n_done:
+    mov [n], eax
+
+    ; ========================================
+    ; I/O + parse n чисел
+    ; ========================================
+    xor ecx, ecx
+    mov edi, num_buf
+read_loop:
+    cmp ecx, [n]
+    jge read_done
+
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, input_buf
+    mov edx, 1024
+    int 0x80
+
+    mov esi, input_buf
+    xor eax, eax
+parse_num:
+    mov bl, [esi]
+    cmp bl, 10
+    je parse_num_done
+    cmp bl, ' '
+    je parse_num_done
+    cmp bl, 0
+    je parse_num_done
+    sub bl, '0'
+    imul eax, eax, 10
+    add eax, ebx
+    inc esi
+    jmp parse_num
+
+parse_num_done:
+    stosd
+    inc ecx
+    jmp read_loop
+read_done:
+
+    ; ========================================
+    ; I/O: вивід масиву до сортування
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, orig_msg
+    mov edx, orig_len
+    int 0x80
+
+    call print_array
+
+    ; ========================================
+    ; LOOPS + LOGIC + MEMORY: Selection Sort
+    ; ========================================
+    mov ecx, 0                    ; i = 0
+outer_loop:
+    mov eax, [n]
+    dec eax
+    cmp ecx, eax
+    jge sort_done
+
+    mov edx, ecx                  ; min_idx = i
+    mov ebx, ecx
+    inc ebx                       ; j = i + 1
+
+inner_loop:
+    cmp ebx, [n]
+    jge inner_done
+
+    ; порівняння arr[j] < arr[min_idx]
+    mov esi, num_buf
+    lea esi, [esi + ebx*4]
+    mov eax, [esi]
+
+    mov esi, num_buf
+    lea esi, [esi + edx*4]
+    mov edi, [esi]
+
+    cmp eax, edi
+    jge no_update
+
+    mov edx, ebx                  ; min_idx = j
+
+no_update:
+    inc ebx
+    jmp inner_loop
+
+inner_done:
+    ; swap arr[i] і arr[min_idx]
+    cmp edx, ecx
+    je no_swap
+
+    mov esi, num_buf
+    lea esi, [esi + ecx*4]        ; &arr[i]
+    mov edi, num_buf
+    lea edi, [edi + edx*4]        ; &arr[min_idx]
+
+    mov eax, [esi]
+    mov ebx, [edi]
+    mov [esi], ebx
+    mov [edi], eax
+
+no_swap:
+    inc ecx
+    jmp outer_loop
+
+sort_done:
+
+    ; ========================================
+    ; I/O: вивід відсортованого масиву
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, sort_msg
+    mov edx, sort_len
+    int 0x80
+
+    call print_array
+
+    ; ========================================
+    ; MATH + LOGIC: обчислення медіани
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, median_msg
+    mov edx, median_len
+    int 0x80
+
+    mov eax, [n]
+    test eax, 1
+    jz even_n
+
+    ; непарне n — медіана = arr[n/2]
+    shr eax, 1
+    jmp print_median
+
+even_n:
+    ; парне n — нижня медіана = arr[n/2 - 1]
+    shr eax, 1
+    dec eax
+
+print_median:
+    mov esi, num_buf
+    lea esi, [esi + eax*4]
+    mov eax, [esi]
+    call print_int
+
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    ; ========================================
+    ; EXIT
+    ; ========================================
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
+
+; ========================================
+; MEMORY + I/O: вивід масиву
+; ========================================
+print_array:
+    push ecx
+    mov ecx, [n]
+    mov esi, num_buf
+print_loop:
+    push ecx
+    push esi
+
+    mov eax, [esi]
+    call print_int
+
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, space
+    mov edx, 1
+    int 0x80
+
+    pop esi
+    pop ecx
+    add esi, 4
+    loop print_loop
+
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    pop ecx
+    ret
+
+; ========================================
+; MATH: перетворення числа в рядок та вивід
+; ========================================
+print_int:
+    push ebx
+    push ecx
+    push edx
+    push edi
+
+    mov edi, input_buf + 30
+    mov byte [edi], 0
+    dec edi
+
+    mov ebx, 10
+    test eax, eax
+    jnz .loop
+    mov byte [edi], '0'
+    dec edi
+    jmp .write
+
+.loop:
+    xor edx, edx
+    div ebx
+    add dl, '0'
+    mov [edi], dl
+    dec edi
+    test eax, eax
+    jnz .loop
+
+.write:
+    inc edi
+    mov esi, edi
+    xor ecx, ecx
+.len:
+    cmp byte [esi], 0
+    je .print
+    inc ecx
+    inc esi
+    jmp .len
+
+.print:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop edi
+    pop edx
+    pop ecx
+    pop ebx
+    ret
