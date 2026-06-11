@@ -1,0 +1,49 @@
+use std::io::{self, BufRead};
+
+fn solve(arr: &[i32]) -> i32 {
+    // Приклад: сума елементів масиву
+    arr.iter().sum()
+}
+
+fn main() {
+    let stdin = io::stdin();
+    let mut lines = stdin.lines();
+
+    let _n: usize = lines.next()
+        .unwrap()
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
+
+    let arr: Vec<i32> = lines.next()
+        .unwrap()
+        .unwrap()
+        .trim()
+        .split_whitespace()
+        .map(|x| x.parse().unwrap())
+        .collect();
+
+    let result = solve(&arr);
+    println!("{}", result);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simple() {
+        assert_eq!(solve(&[1, 2, 3, 4, 5]), 15);
+    }
+
+    #[test]
+    fn test_negative() {
+        assert_eq!(solve(&[-1, -2, 3]), 0);
+    }
+
+    #[test]
+    fn test_empty() {
+        assert_eq!(solve(&[]), 0);
+    }
+}
