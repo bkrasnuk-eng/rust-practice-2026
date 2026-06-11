@@ -1,0 +1,263 @@
+section .data
+    space       db ' ', 0
+    newline     db 10, 0
+    not_found   db '-1', 0
+
+section .bss
+    array       resd 100
+    input_buf   resb 32
+    num_buffer  resb 20
+    indices     resd 100        ; для зберігання всіх індексів (max 100)
+
+section .text
+global _start
+
+; =============================================
+; str_to_int
+; esi -> string
+; eax <- signed integer
+; =============================================
+str_to_int:
+    push ebx
+    push ecx
+    push edx
+
+    xor eax, eax
+    mov ecx, 1                  ; sign
+
+.skip_spaces:
+    cmp byte [esi], ' '
+    jne .check_sign
+    inc esi
+    jmp .skip_spaces
+
+.check_sign:
+    cmp byte [esi], '-'
+    jne .parse
+    mov ecx, -1
+    inc esi
+
+.parse:
+    movzx edx, byte [esi]
+    cmp edx, '0'
+    jl .done
+    cmp edx, '9'
+    jg .done
+
+    imul eax, 10
+    sub edx, '0'
+    add eax, edx
+    inc esi
+    jmp .parse
+
+.done:
+    imul eax, ecx
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+; =============================================
+; print_signed
+; eax = signed number
+; =============================================
+print_signed:
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+
+    mov esi, num_buffer + 18
+    mov byte [esi], 0
+    dec esi
+
+    mov ebx, eax                ; save original
+    test eax, eax
+    jns .positive
+
+    neg eax
+
+.positive:
+    mov ecx, 10
+.loop:
+    xor edx, edx
+    div ecx
+    add dl, '0'
+    mov [esi], dl
+    dec esi
+    test eax, eax
+    jnz .loop
+
+    inc esi
+
+    ; додати мінус якщо потрібно
+    test ebx, ebx
+    jns .print
+    dec esi
+    mov byte [esi], '-'
+
+.print:
+    mov ecx, esi
+    xor edx, edx
+.len:
+    cmp byte [ecx], 0
+    je .write
+    inc ecx
+    inc edx
+    jmp .len
+
+.write:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+; =============================================
+; print_string
+; esi = null-terminated string
+; =============================================
+print_string:
+    push eax
+    push ebx
+    push ecx
+    push edx
+
+    mov ecx, esi
+    xor edx, edx
+.len:
+    cmp byte [ecx], 0
+    je .write
+    inc ecx
+    inc edx
+    jmp .len
+
+.write:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+_start:
+    ; ==================== I/O ====================
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, input_buf
+    mov edx, 31
+    int 0x80
+
+    ; ==================== parse ====================
+    mov esi, input_buf
+    call str_to_int
+    mov ecx, eax                ; ecx = n
+
+    ; читання n чисел
+    xor edi, edi                ; індекс масиву
+.read_loop:
+    call str_to_int
+    mov [array + edi*4], eax
+    inc edi
+    cmp edi, ecx
+    jl .read_loop
+
+    ; читання target
+    call str_to_int
+    mov ebx, eax                ; ebx = target
+
+    ; ==================== memory ====================
+    xor esi, esi                ; індекс для пошуку
+    xor edx, edx                ; edx = count
+    mov edi, -1                 ; first index = -1
+    mov ebp, indices            ; вказівник на буфер індексів
+
+    ; ==================== logic + loops ====================
+.search_loop:
+    cmp esi, ecx
+    jge .search_done
+
+    cmp [array + esi*4], ebx
+    jne .next
+
+    ; знайдено
+    cmp edi, -1
+    jne .skip_first
+    mov edi, esi                ; запам'ятовуємо перший індекс
+.skip_first:
+
+    mov [ebp], esi              ; зберігаємо індекс
+    add ebp, 4
+    inc edx                     ; count++
+
+.next:
+    inc esi
+    jmp .search_loop
+
+.search_done:
+    ; ==================== output ====================
+
+    ; 1. Перший індекс або -1
+    cmp edi, -1
+    jne .print_first
+    mov esi, not_found
+    call print_string
+    jmp .print_count
+
+.print_first:
+    mov eax, edi
+    call print_signed
+
+.print_count:
+    mov esi, newline
+    call print_string
+
+    ; 2. Кількість входжень
+    mov eax, edx
+    call print_signed
+    mov esi, newline
+    call print_string
+
+    ; 3. Список всіх індексів
+    test edx, edx
+    jz .empty_list
+
+    mov esi, indices
+    mov ecx, edx                ; кількість
+.print_indices:
+    mov eax, [esi]
+    call print_signed
+
+    dec ecx
+    jz .end_indices
+
+    mov esi, space
+    call print_string
+
+    add esi, 4                  ; наступний індекс
+    jmp .print_indices
+
+.empty_list:
+    ; просто новий рядок (порожній список)
+    mov esi, newline
+    call print_string
+    jmp .exit
+
+.end_indices:
+    mov esi, newline
+    call print_string
+
+.exit:
+    ; ==================== exit ====================
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
