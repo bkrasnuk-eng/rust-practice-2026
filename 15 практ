@@ -1,0 +1,188 @@
+section .data
+    prompt_n db 'n: ', 0
+    prompt_n_len equ $ - prompt_n
+    fact_msg db 'fact(n) = ', 0
+    fact_len equ $ - fact_msg
+    calls_msg db 'calls   = ', 0
+    calls_len equ $ - calls_msg
+    newline db 10, 0
+
+section .bss
+    input_buf resb 64
+    n         resd 1
+    calls     resd 1          ; лічильник рекурсивних викликів
+
+section .text
+global _start
+
+_start:
+    ; ========================================
+    ; I/O + parse n
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, prompt_n
+    mov edx, prompt_n_len
+    int 0x80
+
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, input_buf
+    mov edx, 64
+    int 0x80
+
+    mov esi, input_buf
+    xor eax, eax
+parse_n:
+    mov bl, [esi]
+    cmp bl, 10
+    je parse_n_done
+    cmp bl, ' '
+    je parse_n_done
+    cmp bl, 0
+    je parse_n_done
+    sub bl, '0'
+    imul eax, eax, 10
+    add eax, ebx
+    inc esi
+    jmp parse_n
+parse_n_done:
+    mov [n], eax
+
+    ; ========================================
+    ; MATH: обнулення лічильника
+    ; ========================================
+    mov dword [calls], 0
+
+    ; ========================================
+    ; MATH + LOGIC: виклик рекурсивної функції
+    ; ========================================
+    mov eax, [n]
+    call fact
+
+    ; ========================================
+    ; I/O: вивід результату
+    ; ========================================
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, fact_msg
+    mov edx, fact_len
+    int 0x80
+
+    push eax                    ; зберігаємо fact(n)
+    call print_int
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, calls_msg
+    mov edx, calls_len
+    int 0x80
+
+    mov eax, [calls]
+    call print_int
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    ; ========================================
+    ; EXIT
+    ; ========================================
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
+
+; ========================================
+; MATH: рекурсивна функція factorial
+; Вхід:  eax = n
+; Вихід: eax = n!
+; ========================================
+fact:
+    ; Пролог
+    push ebp
+    mov ebp, esp
+    push ebx                    ; зберігаємо ebx (callee-saved)
+
+    inc dword [calls]           ; підрахунок кожного виклику
+
+    cmp eax, 1
+    jbe base_case               ; 0! = 1! = 1
+
+    ; рекурсивний виклик: fact(n-1)
+    push eax                    ; зберігаємо n
+    dec eax
+    call fact
+    pop ebx                     ; ebx = n
+
+    ; eax = fact(n-1), ebx = n
+    mul ebx                     ; eax = eax * ebx
+
+    jmp fact_epilog
+
+base_case:
+    mov eax, 1
+
+fact_epilog:
+    ; Епілог
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
+
+; ========================================
+; MATH + I/O: вивід десяткового числа
+; ========================================
+print_int:
+    push ebx
+    push ecx
+    push edx
+    push edi
+
+    mov edi, input_buf + 40
+    mov byte [edi], 0
+    dec edi
+
+    mov ebx, 10
+    test eax, eax
+    jnz .loop
+
+    mov byte [edi], '0'
+    dec edi
+    jmp .write
+
+.loop:
+    xor edx, edx
+    div ebx
+    add dl, '0'
+    mov [edi], dl
+    dec edi
+    test eax, eax
+    jnz .loop
+
+.write:
+    inc edi
+    mov esi, edi
+    xor ecx, ecx
+.len_loop:
+    cmp byte [esi], 0
+    je .print
+    inc ecx
+    inc esi
+    jmp .len_loop
+
+.print:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+
+    pop edi
+    pop edx
+    pop ecx
+    pop ebx
+    ret
