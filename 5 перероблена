@@ -1,0 +1,420 @@
+// task3_15.rs
+use std::collections::HashMap;
+
+// ==================== Практична №3 - Робота з рядками ====================
+pub fn reverse_string(s: &str) -> String {
+    s.chars().rev().collect()
+}
+
+pub fn count_vowels(s: &str) -> usize {
+    s.chars()
+        .filter(|c| matches!(c.to_ascii_lowercase(), 'a' | 'e' | 'i' | 'o' | 'u'))
+        .count()
+}
+
+// ==================== Практична №4 - Робота з масивами ====================
+pub fn find_max(arr: &[i32]) -> Option<i32> {
+    arr.iter().max().copied()
+}
+
+pub fn sum_array(arr: &[i32]) -> i32 {
+    arr.iter().sum()
+}
+
+// ==================== Практична №5 - Факторіал ====================
+pub fn factorial(n: u64) -> u64 {
+    match n {
+        0 | 1 => 1,
+        _ => n * factorial(n - 1),
+    }
+}
+
+pub fn factorial_iterative(n: u64) -> u64 {
+    (1..=n).product()
+}
+
+// ==================== Практична №6 - Числа Фібоначчі ====================
+pub fn fibonacci(n: u32) -> u32 {
+    match n {
+        0 => 0,
+        1 => 1,
+        _ => fibonacci(n - 1) + fibonacci(n - 2),
+    }
+}
+
+pub fn fibonacci_iterative(n: u32) -> u32 {
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let temp = a;
+        a = b;
+        b = temp + b;
+    }
+    a
+}
+
+// ==================== Практична №7 - Перевірка на паліндром ====================
+pub fn is_palindrome(s: &str) -> bool {
+    let clean: String = s
+        .chars()
+        .filter(|c| c.is_alphabetic())
+        .map(|c| c.to_ascii_lowercase())
+        .collect();
+    
+    clean == clean.chars().rev().collect::<String>()
+}
+
+// ==================== Практична №8 - Прості числа ====================
+pub fn is_prime(n: u32) -> bool {
+    if n <= 1 {
+        return false;
+    }
+    if n == 2 {
+        return true;
+    }
+    if n % 2 == 0 {
+        return false;
+    }
+    
+    let limit = (n as f64).sqrt() as u32;
+    (3..=limit).step_by(2).all(|i| n % i != 0)
+}
+
+pub fn sieve_of_eratosthenes(n: usize) -> Vec<bool> {
+    let mut sieve = vec![true; n + 1];
+    if n >= 0 {
+        sieve[0] = false;
+    }
+    if n >= 1 {
+        sieve[1] = false;
+    }
+    
+    for i in 2..=(n as f64).sqrt() as usize {
+        if sieve[i] {
+            let mut j = i * i;
+            while j <= n {
+                sieve[j] = false;
+                j += i;
+            }
+        }
+    }
+    sieve
+}
+
+// ==================== Практична №9 - Сортування ====================
+pub fn bubble_sort(arr: &mut [i32]) {
+    let n = arr.len();
+    for i in 0..n {
+        for j in 0..n - i - 1 {
+            if arr[j] > arr[j + 1] {
+                arr.swap(j, j + 1);
+            }
+        }
+    }
+}
+
+pub fn quick_sort(arr: &mut [i32]) {
+    if arr.len() <= 1 {
+        return;
+    }
+    
+    let pivot = arr[arr.len() / 2];
+    let left: Vec<i32> = arr.iter().filter(|&x| *x < pivot).copied().collect();
+    let middle: Vec<i32> = arr.iter().filter(|&x| *x == pivot).copied().collect();
+    let right: Vec<i32> = arr.iter().filter(|&x| *x > pivot).copied().collect();
+    
+    let mut temp = Vec::new();
+    temp.extend(left);
+    temp.extend(middle);
+    temp.extend(right);
+    
+    arr.copy_from_slice(&temp);
+}
+
+// ==================== Практична №10 - Робота з HashMap ====================
+pub fn word_count(text: &str) -> HashMap<String, u32> {
+    let mut map = HashMap::new();
+    
+    for word in text.split_whitespace() {
+        let clean = word
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .collect::<String>()
+            .to_lowercase();
+        
+        if !clean.is_empty() {
+            *map.entry(clean).or_insert(0) += 1;
+        }
+    }
+    map
+}
+
+// ==================== Практична №11 - Структури ====================
+#[derive(Debug, PartialEq)]
+pub struct Rectangle {
+    pub width: f64,
+    pub height: f64,
+}
+
+impl Rectangle {
+    pub fn new(width: f64, height: f64) -> Self {
+        Rectangle { width, height }
+    }
+    
+    pub fn area(&self) -> f64 {
+        self.width * self.height
+    }
+    
+    pub fn perimeter(&self) -> f64 {
+        2.0 * (self.width + self.height)
+    }
+}
+
+// ==================== Практична №12 - Перерахування ====================
+#[derive(Debug, PartialEq)]
+pub enum Operation {
+    Add(i32, i32),
+    Subtract(i32, i32),
+    Multiply(i32, i32),
+    Divide(i32, i32),
+}
+
+pub fn calculate(op: Operation) -> Option<i32> {
+    match op {
+        Operation::Add(a, b) => Some(a + b),
+        Operation::Subtract(a, b) => Some(a - b),
+        Operation::Multiply(a, b) => Some(a * b),
+        Operation::Divide(a, b) => {
+            if b != 0 {
+                Some(a / b)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+// ==================== Практична №13 - Обробка помилок ====================
+#[derive(Debug, PartialEq)]
+pub enum ParseError {
+    EmptyString,
+    InvalidNumber,
+}
+
+pub fn parse_number(s: &str) -> Result<i32, ParseError> {
+    if s.is_empty() {
+        return Err(ParseError::EmptyString);
+    }
+    
+    s.parse::<i32>().map_err(|_| ParseError::InvalidNumber)
+}
+
+pub fn safe_divide(a: f64, b: f64) -> Result<f64, String> {
+    if b == 0.0 {
+        Err("Division by zero".to_string())
+    } else {
+        Ok(a / b)
+    }
+}
+
+// ==================== Практична №14 - Ітератори та колекції ====================
+pub fn unique_elements<T: PartialEq + Clone>(vec: Vec<T>) -> Vec<T> {
+    let mut result = Vec::new();
+    for item in vec {
+        if !result.contains(&item) {
+            result.push(item);
+        }
+    }
+    result
+}
+
+pub fn map_double(arr: &[i32]) -> Vec<i32> {
+    arr.iter().map(|x| x * 2).collect()
+}
+
+// ==================== Практична №15 - Робота з Option ====================
+pub fn safe_index<T: Copy>(arr: &[T], index: usize) -> Option<T> {
+    arr.get(index).copied()
+}
+
+pub fn find_min<T: PartialOrd + Copy>(arr: &[T]) -> Option<T> {
+    arr.iter().min().copied()
+}
+
+pub fn combine_options(a: Option<i32>, b: Option<i32>) -> Option<i32> {
+    match (a, b) {
+        (Some(x), Some(y)) => Some(x + y),
+        _ => None,
+    }
+}
+
+// ==================== ТЕСТИ ====================
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Тести для №3
+    #[test]
+    fn test_reverse_string() {
+        assert_eq!(reverse_string("hello"), "olleh");
+        assert_eq!(reverse_string("rust"), "tsur");
+        assert_eq!(reverse_string(""), "");
+    }
+
+    #[test]
+    fn test_count_vowels() {
+        assert_eq!(count_vowels("hello"), 2);
+        assert_eq!(count_vowels("rust"), 1);
+        assert_eq!(count_vowels("aeiou"), 5);
+    }
+
+    // Тести для №4
+    #[test]
+    fn test_find_max() {
+        assert_eq!(find_max(&[1, 5, 3, 9, 2]), Some(9));
+        assert_eq!(find_max(&[]), None);
+    }
+
+    #[test]
+    fn test_sum_array() {
+        assert_eq!(sum_array(&[1, 2, 3, 4, 5]), 15);
+        assert_eq!(sum_array(&[]), 0);
+    }
+
+    // Тести для №5
+    #[test]
+    fn test_factorial() {
+        assert_eq!(factorial(0), 1);
+        assert_eq!(factorial(1), 1);
+        assert_eq!(factorial(5), 120);
+    }
+
+    #[test]
+    fn test_factorial_iterative() {
+        assert_eq!(factorial_iterative(5), 120);
+        assert_eq!(factorial_iterative(0), 1);
+    }
+
+    // Тести для №6
+    #[test]
+    fn test_fibonacci() {
+        assert_eq!(fibonacci(0), 0);
+        assert_eq!(fibonacci(1), 1);
+        assert_eq!(fibonacci(10), 55);
+    }
+
+    #[test]
+    fn test_fibonacci_iterative() {
+        assert_eq!(fibonacci_iterative(10), 55);
+    }
+
+    // Тести для №7
+    #[test]
+    fn test_is_palindrome() {
+        assert!(is_palindrome("racecar"));
+        assert!(is_palindrome("A man, a plan, a canal, panama"));
+        assert!(!is_palindrome("hello"));
+    }
+
+    // Тести для №8
+    #[test]
+    fn test_is_prime() {
+        assert!(!is_prime(1));
+        assert!(is_prime(2));
+        assert!(is_prime(17));
+        assert!(!is_prime(100));
+    }
+
+    // Тести для №9
+    #[test]
+    fn test_bubble_sort() {
+        let mut arr = [64, 34, 25, 12, 22, 11, 90];
+        bubble_sort(&mut arr);
+        assert_eq!(arr, [11, 12, 22, 25, 34, 64, 90]);
+    }
+
+    #[test]
+    fn test_quick_sort() {
+        let mut arr = [3, 6, 8, 10, 1, 2, 1];
+        quick_sort(&mut arr);
+        assert_eq!(arr, [1, 1, 2, 3, 6, 8, 10]);
+    }
+
+    // Тести для №10
+    #[test]
+    fn test_word_count() {
+        let result = word_count("hello world hello");
+        assert_eq!(result.get("hello"), Some(&2));
+        assert_eq!(result.get("world"), Some(&1));
+    }
+
+    // Тести для №11
+    #[test]
+    fn test_rectangle_area() {
+        let rect = Rectangle::new(5.0, 3.0);
+        assert_eq!(rect.area(), 15.0);
+    }
+
+    #[test]
+    fn test_rectangle_perimeter() {
+        let rect = Rectangle::new(5.0, 3.0);
+        assert_eq!(rect.perimeter(), 16.0);
+    }
+
+    // Тести для №12
+    #[test]
+    fn test_calculate() {
+        assert_eq!(calculate(Operation::Add(5, 3)), Some(8));
+        assert_eq!(calculate(Operation::Subtract(10, 4)), Some(6));
+        assert_eq!(calculate(Operation::Multiply(7, 6)), Some(42));
+        assert_eq!(calculate(Operation::Divide(10, 2)), Some(5));
+        assert_eq!(calculate(Operation::Divide(10, 0)), None);
+    }
+
+    // Тести для №13
+    #[test]
+    fn test_parse_number() {
+        assert_eq!(parse_number("123"), Ok(123));
+        assert_eq!(parse_number(""), Err(ParseError::EmptyString));
+        assert_eq!(parse_number("abc"), Err(ParseError::InvalidNumber));
+    }
+
+    #[test]
+    fn test_safe_divide() {
+        assert_eq!(safe_divide(10.0, 2.0), Ok(5.0));
+        assert!(safe_divide(10.0, 0.0).is_err());
+    }
+
+    // Тести для №14
+    #[test]
+    fn test_unique_elements() {
+        assert_eq!(unique_elements(vec![1, 2, 2, 3, 3, 3]), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_map_double() {
+        assert_eq!(map_double(&[1, 2, 3, 4]), vec![2, 4, 6, 8]);
+        assert_eq!(map_double(&[]), Vec::<i32>::new());
+    }
+
+    // Тести для №15
+    #[test]
+    fn test_safe_index() {
+        let arr = [10, 20, 30];
+        assert_eq!(safe_index(&arr, 1), Some(20));
+        assert_eq!(safe_index(&arr, 5), None);
+    }
+
+    #[test]
+    fn test_find_min() {
+        assert_eq!(find_min(&[5, 2, 8, 1]), Some(1));
+        assert_eq!(find_min::<i32>(&[]), None);
+    }
+
+    #[test]
+    fn test_combine_options() {
+        assert_eq!(combine_options(Some(5), Some(3)), Some(8));
+        assert_eq!(combine_options(Some(5), None), None);
+        assert_eq!(combine_options(None, Some(3)), None);
+    }
+}
