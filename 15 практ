@@ -1,188 +1,210 @@
-section .data
-    prompt_n db 'n: ', 0
-    prompt_n_len equ $ - prompt_n
-    fact_msg db 'fact(n) = ', 0
-    fact_len equ $ - fact_msg
-    calls_msg db 'calls   = ', 0
-    calls_len equ $ - calls_msg
-    newline db 10, 0
+// Практична №3
+// https://www.hackerrank.com/challenges/solve-me-first/problem
+fn solve_me_first(a: i32, b: i32) -> i32 {
+    a + b
+}
 
-section .bss
-    input_buf resb 64
-    n         resd 1
-    calls     resd 1          ; лічильник рекурсивних викликів
+// Практична №4
+// https://www.hackerrank.com/challenges/simple-array-sum/problem
+fn simple_array_sum(ar: &[i32]) -> i32 {
+    ar.iter().sum()
+}
 
-section .text
-global _start
+// Практична №5
+// https://www.hackerrank.com/challenges/compare-the-triplets/problem
+fn compare_triplets(a: &[i32], b: &[i32]) -> Vec<i32> {
+    let mut score = vec![0, 0];
+    for i in 0..3 {
+        if a[i] > b[i] {
+            score[0] += 1;
+        } else if a[i] < b[i] {
+            score[1] += 1;
+        }
+    }
+    score
+}
 
-_start:
-    ; ========================================
-    ; I/O + parse n
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, prompt_n
-    mov edx, prompt_n_len
-    int 0x80
+// Практична №6
+// https://www.hackerrank.com/challenges/a-very-big-sum/problem
+fn a_very_big_sum(ar: &[i64]) -> i64 {
+    ar.iter().sum()
+}
 
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, input_buf
-    mov edx, 64
-    int 0x80
+// Практична №7
+// https://www.hackerrank.com/challenges/diagonal-difference/problem
+fn diagonal_difference(arr: &[Vec<i32>]) -> i32 {
+    let n = arr.len();
+    let primary: i32 = (0..n).map(|i| arr[i][i]).sum();
+    let secondary: i32 = (0..n).map(|i| arr[i][n - 1 - i]).sum();
+    (primary - secondary).abs()
+}
 
-    mov esi, input_buf
-    xor eax, eax
-parse_n:
-    mov bl, [esi]
-    cmp bl, 10
-    je parse_n_done
-    cmp bl, ' '
-    je parse_n_done
-    cmp bl, 0
-    je parse_n_done
-    sub bl, '0'
-    imul eax, eax, 10
-    add eax, ebx
-    inc esi
-    jmp parse_n
-parse_n_done:
-    mov [n], eax
+// Практична №8
+// https://www.hackerrank.com/challenges/plus-minus/problem
+fn plus_minus(arr: &[i32]) -> Vec<f64> {
+    let len = arr.len() as f64;
+    let positive = arr.iter().filter(|&&x| x > 0).count() as f64 / len;
+    let negative = arr.iter().filter(|&&x| x < 0).count() as f64 / len;
+    let zero = arr.iter().filter(|&&x| x == 0).count() as f64 / len;
+    vec![positive, negative, zero]
+}
 
-    ; ========================================
-    ; MATH: обнулення лічильника
-    ; ========================================
-    mov dword [calls], 0
+// Практична №9
+// https://www.hackerrank.com/challenges/staircase/problem
+fn staircase(n: i32) -> Vec<String> {
+    let mut result = Vec::new();
+    for i in 1..=n {
+        let spaces = (n - i) as usize;
+        let hashes = i as usize;
+        result.push(format!("{}{}", " ".repeat(spaces), "#".repeat(hashes)));
+    }
+    result
+}
 
-    ; ========================================
-    ; MATH + LOGIC: виклик рекурсивної функції
-    ; ========================================
-    mov eax, [n]
-    call fact
+// Практична №10
+// https://www.hackerrank.com/challenges/mini-max-sum/problem
+fn mini_max_sum(arr: &[i64]) -> (i64, i64) {
+    let sum: i64 = arr.iter().sum();
+    let min_val = arr.iter().min().unwrap();
+    let max_val = arr.iter().max().unwrap();
+    (sum - max_val, sum - min_val)
+}
 
-    ; ========================================
-    ; I/O: вивід результату
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, fact_msg
-    mov edx, fact_len
-    int 0x80
+// Практична №11
+// https://www.hackerrank.com/challenges/birthday-cake-candles/problem
+fn birthday_cake_candles(candles: &[i32]) -> i32 {
+    let max = candles.iter().max().unwrap();
+    candles.iter().filter(|&&x| x == *max).count() as i32
+}
 
-    push eax                    ; зберігаємо fact(n)
-    call print_int
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, newline
-    mov edx, 1
-    int 0x80
+// Практична №12
+// https://www.hackerrank.com/challenges/time-conversion/problem
+fn time_conversion(s: &str) -> String {
+    let period = &s[8..10];
+    let mut hour = s[0..2].parse::<i32>().unwrap();
+    if period == "PM" && hour != 12 {
+        hour += 12;
+    } else if period == "AM" && hour == 12 {
+        hour = 0;
+    }
+    format!("{:02}:{}", hour, &s[3..8])
+}
 
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, calls_msg
-    mov edx, calls_len
-    int 0x80
+// Практична №13
+// https://www.hackerrank.com/challenges/grading/problem
+fn grading_students(grades: &[i32]) -> Vec<i32> {
+    grades.iter().map(|&grade| {
+        if grade < 38 || grade % 5 < 3 {
+            grade
+        } else {
+            grade + (5 - grade % 5)
+        }
+    }).collect()
+}
 
-    mov eax, [calls]
-    call print_int
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, newline
-    mov edx, 1
-    int 0x80
+// Практична №14
+// https://www.hackerrank.com/challenges/apple-and-orange/problem
+fn count_apples_and_oranges(s: i32, t: i32, a: i32, b: i32, apples: &[i32], oranges: &[i32]) -> (i32, i32) {
+    let apple_count = apples.iter().filter(|&&d| a + d >= s && a + d <= t).count() as i32;
+    let orange_count = oranges.iter().filter(|&&d| b + d >= s && b + d <= t).count() as i32;
+    (apple_count, orange_count)
+}
 
-    ; ========================================
-    ; EXIT
-    ; ========================================
-    mov eax, 1
-    xor ebx, ebx
-    int 0x80
+// Практична №15
+// https://www.hackerrank.com/challenges/kangaroo/problem
+fn kangaroo(x1: i32, v1: i32, x2: i32, v2: i32) -> String {
+    if v1 == v2 {
+        if x1 == x2 {
+            return "YES".to_string();
+        } else {
+            return "NO".to_string();
+        }
+    }
+    let dx = x2 - x1;
+    let dv = v1 - v2;
+    if dv != 0 && dx % dv == 0 && dx / dv >= 0 {
+        "YES".to_string()
+    } else {
+        "NO".to_string()
+    }
+}
 
-; ========================================
-; MATH: рекурсивна функція factorial
-; Вхід:  eax = n
-; Вихід: eax = n!
-; ========================================
-fact:
-    ; Пролог
-    push ebp
-    mov ebp, esp
-    push ebx                    ; зберігаємо ebx (callee-saved)
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    inc dword [calls]           ; підрахунок кожного виклику
+    #[test]
+    fn test_solve_me_first() {
+        assert_eq!(solve_me_first(5, 3), 8);
+    }
 
-    cmp eax, 1
-    jbe base_case               ; 0! = 1! = 1
+    #[test]
+    fn test_simple_array_sum() {
+        assert_eq!(simple_array_sum(&[1, 2, 3, 4, 5]), 15);
+    }
 
-    ; рекурсивний виклик: fact(n-1)
-    push eax                    ; зберігаємо n
-    dec eax
-    call fact
-    pop ebx                     ; ebx = n
+    #[test]
+    fn test_compare_triplets() {
+        assert_eq!(compare_triplets(&[5, 6, 7], &[3, 6, 10]), vec![1, 1]);
+    }
 
-    ; eax = fact(n-1), ebx = n
-    mul ebx                     ; eax = eax * ebx
+    #[test]
+    fn test_a_very_big_sum() {
+        assert_eq!(a_very_big_sum(&[1000000001, 1000000002, 1000000003]), 3000000006);
+    }
 
-    jmp fact_epilog
+    #[test]
+    fn test_diagonal_difference() {
+        let arr = vec![vec![11, 2, 4], vec![4, 5, 6], vec![10, 8, -12]];
+        assert_eq!(diagonal_difference(&arr), 15);
+    }
 
-base_case:
-    mov eax, 1
+    #[test]
+    fn test_plus_minus() {
+        let result = plus_minus(&[-4, 3, -9, 0, 4, 1]);
+        assert_eq!(result.len(), 3);
+    }
 
-fact_epilog:
-    ; Епілог
-    pop ebx
-    mov esp, ebp
-    pop ebp
-    ret
+    #[test]
+    fn test_staircase() {
+        let result = staircase(3);
+        assert_eq!(result, vec!["  #", " ##", "###"]);
+    }
 
-; ========================================
-; MATH + I/O: вивід десяткового числа
-; ========================================
-print_int:
-    push ebx
-    push ecx
-    push edx
-    push edi
+    #[test]
+    fn test_mini_max_sum() {
+        assert_eq!(mini_max_sum(&[1, 3, 5, 7, 9]), (16, 24));
+    }
 
-    mov edi, input_buf + 40
-    mov byte [edi], 0
-    dec edi
+    #[test]
+    fn test_birthday_cake_candles() {
+        assert_eq!(birthday_cake_candles(&[3, 2, 1, 3]), 2);
+    }
 
-    mov ebx, 10
-    test eax, eax
-    jnz .loop
+    #[test]
+    fn test_time_conversion() {
+        assert_eq!(time_conversion("07:05:45PM"), "19:05:45");
+        assert_eq!(time_conversion("12:00:00AM"), "00:00:00");
+    }
 
-    mov byte [edi], '0'
-    dec edi
-    jmp .write
+    #[test]
+    fn test_grading_students() {
+        assert_eq!(grading_students(&[73, 67, 38, 33]), vec![75, 67, 40, 33]);
+    }
 
-.loop:
-    xor edx, edx
-    div ebx
-    add dl, '0'
-    mov [edi], dl
-    dec edi
-    test eax, eax
-    jnz .loop
+    #[test]
+    fn test_count_apples_and_oranges() {
+        assert_eq!(count_apples_and_oranges(7, 11, 5, 15, &[-2, 2, 1], &[5, -6]), (1, 1));
+    }
 
-.write:
-    inc edi
-    mov esi, edi
-    xor ecx, ecx
-.len_loop:
-    cmp byte [esi], 0
-    je .print
-    inc ecx
-    inc esi
-    jmp .len_loop
+    #[test]
+    fn test_kangaroo() {
+        assert_eq!(kangaroo(0, 3, 4, 2), "YES");
+        assert_eq!(kangaroo(0, 2, 5, 3), "NO");
+    }
+}
 
-.print:
-    mov eax, 4
-    mov ebx, 1
-    int 0x80
-
-    pop edi
-    pop edx
-    pop ecx
-    pop ebx
-    ret
+fn main() {
+    println!("Practical works 3-15");
+    println!("Run 'cargo test' to verify all solutions");
+}
