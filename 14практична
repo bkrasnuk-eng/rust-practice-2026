@@ -1,293 +1,199 @@
-section .data
-    prompt_n db 'n: ', 0
-    prompt_n_len equ $ - prompt_n
-    space db ' ', 0
-    newline db 10, 0
-    orig_msg db 'Before: ', 0
-    orig_len equ $ - orig_msg
-    sort_msg db 'After:  ', 0
-    sort_len equ $ - sort_msg
-    median_msg db 'Median: ', 0
-    median_len equ $ - median_msg
+// ==================== ПРАКТИЧНА РОБОТА №3 ====================
+fn task3(a: i32, b: i32) -> i32 {
+    a + b
+}
 
-section .bss
-    input_buf resb 1024
-    num_buf   resd 101          ; n <= 100
-    n         resd 1
+// ==================== ПРАКТИЧНА РОБОТА №4 ====================
+fn task4(ar: &[i32]) -> i32 {
+    ar.iter().sum()
+}
 
-section .text
-global _start
+// ==================== ПРАКТИЧНА РОБОТА №5 ====================
+fn task5(a: &[i32], b: &[i32]) -> Vec<i32> {
+    vec![
+        (0..3).filter(|&i| a[i] > b[i]).count() as i32,
+        (0..3).filter(|&i| a[i] < b[i]).count() as i32,
+    ]
+}
 
-_start:
-    ; ========================================
-    ; I/O + parse n
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, prompt_n
-    mov edx, prompt_n_len
-    int 0x80
+// ==================== ПРАКТИЧНА РОБОТА №6 ====================
+fn task6(ar: &[i64]) -> i64 {
+    ar.iter().sum()
+}
 
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, input_buf
-    mov edx, 1024
-    int 0x80
+// ==================== ПРАКТИЧНА РОБОТА №7 ====================
+fn task7(arr: &[Vec<i32>]) -> i32 {
+    let n = arr.len();
+    let primary: i32 = (0..n).map(|i| arr[i][i]).sum();
+    let secondary: i32 = (0..n).map(|i| arr[i][n - 1 - i]).sum();
+    (primary - secondary).abs()
+}
 
-    mov esi, input_buf
-    xor eax, eax
-parse_n:
-    mov bl, [esi]
-    cmp bl, 10
-    je parse_n_done
-    cmp bl, ' '
-    je parse_n_done
-    sub bl, '0'
-    imul eax, eax, 10
-    add eax, ebx
-    inc esi
-    jmp parse_n
-parse_n_done:
-    mov [n], eax
+// ==================== ПРАКТИЧНА РОБОТА №8 ====================
+fn task8(arr: &[i32]) -> Vec<f64> {
+    let len = arr.len() as f64;
+    vec![
+        arr.iter().filter(|&&x| x > 0).count() as f64 / len,
+        arr.iter().filter(|&&x| x < 0).count() as f64 / len,
+        arr.iter().filter(|&&x| x == 0).count() as f64 / len,
+    ]
+}
 
-    ; ========================================
-    ; I/O + parse n чисел
-    ; ========================================
-    xor ecx, ecx
-    mov edi, num_buf
-read_loop:
-    cmp ecx, [n]
-    jge read_done
+// ==================== ПРАКТИЧНА РОБОТА №9 ====================
+fn task9(n: i32) -> Vec<String> {
+    (1..=n)
+        .map(|i| format!("{}{}", " ".repeat((n - i) as usize), "#".repeat(i as usize)))
+        .collect()
+}
 
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, input_buf
-    mov edx, 1024
-    int 0x80
+// ==================== ПРАКТИЧНА РОБОТА №10 ====================
+fn task10(arr: &[i64]) -> (i64, i64) {
+    let sum: i64 = arr.iter().sum();
+    let min_val = arr.iter().min().unwrap();
+    let max_val = arr.iter().max().unwrap();
+    (sum - max_val, sum - min_val)
+}
 
-    mov esi, input_buf
-    xor eax, eax
-parse_num:
-    mov bl, [esi]
-    cmp bl, 10
-    je parse_num_done
-    cmp bl, ' '
-    je parse_num_done
-    cmp bl, 0
-    je parse_num_done
-    sub bl, '0'
-    imul eax, eax, 10
-    add eax, ebx
-    inc esi
-    jmp parse_num
+// ==================== ПРАКТИЧНА РОБОТА №11 ====================
+fn task11(candles: &[i32]) -> i32 {
+    let max = candles.iter().max().unwrap();
+    candles.iter().filter(|&&x| x == *max).count() as i32
+}
 
-parse_num_done:
-    stosd
-    inc ecx
-    jmp read_loop
-read_done:
+// ==================== ПРАКТИЧНА РОБОТА №12 ====================
+fn task12(s: &str) -> String {
+    let period = &s[8..10];
+    let mut hour = s[0..2].parse::<i32>().unwrap();
+    if period == "PM" && hour != 12 {
+        hour += 12;
+    } else if period == "AM" && hour == 12 {
+        hour = 0;
+    }
+    format!("{:02}:{}", hour, &s[3..8])
+}
 
-    ; ========================================
-    ; I/O: вивід масиву до сортування
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, orig_msg
-    mov edx, orig_len
-    int 0x80
+// ==================== ПРАКТИЧНА РОБОТА №13 ====================
+fn task13(grades: &[i32]) -> Vec<i32> {
+    grades
+        .iter()
+        .map(|&g| {
+            if g < 38 || g % 5 < 3 {
+                g
+            } else {
+                g + (5 - g % 5)
+            }
+        })
+        .collect()
+}
 
-    call print_array
+// ==================== ПРАКТИЧНА РОБОТА №14 ====================
+fn task14(s: i32, t: i32, a: i32, b: i32, apples: &[i32], oranges: &[i32]) -> (i32, i32) {
+    (
+        apples.iter().filter(|&&d| a + d >= s && a + d <= t).count() as i32,
+        oranges.iter().filter(|&&d| b + d >= s && b + d <= t).count() as i32,
+    )
+}
 
-    ; ========================================
-    ; LOOPS + LOGIC + MEMORY: Selection Sort
-    ; ========================================
-    mov ecx, 0                    ; i = 0
-outer_loop:
-    mov eax, [n]
-    dec eax
-    cmp ecx, eax
-    jge sort_done
+// ==================== ПРАКТИЧНА РОБОТА №15 ====================
+fn task15(x1: i32, v1: i32, x2: i32, v2: i32) -> &'static str {
+    if v1 == v2 {
+        return if x1 == x2 { "YES" } else { "NO" };
+    }
+    let dx = x2 - x1;
+    let dv = v1 - v2;
+    if dv != 0 && dx % dv == 0 && dx / dv >= 0 {
+        "YES"
+    } else {
+        "NO"
+    }
+}
 
-    mov edx, ecx                  ; min_idx = i
-    mov ebx, ecx
-    inc ebx                       ; j = i + 1
+// ==================== ТЕСТИ ====================
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-inner_loop:
-    cmp ebx, [n]
-    jge inner_done
+    #[test]
+    fn test_task3() {
+        assert_eq!(task3(5, 3), 8);
+        assert_eq!(task3(0, 0), 0);
+        assert_eq!(task3(-1, 1), 0);
+    }
 
-    ; порівняння arr[j] < arr[min_idx]
-    mov esi, num_buf
-    lea esi, [esi + ebx*4]
-    mov eax, [esi]
+    #[test]
+    fn test_task4() {
+        assert_eq!(task4(&[1, 2, 3, 4, 5]), 15);
+        assert_eq!(task4(&[]), 0);
+    }
 
-    mov esi, num_buf
-    lea esi, [esi + edx*4]
-    mov edi, [esi]
+    #[test]
+    fn test_task5() {
+        assert_eq!(task5(&[5, 6, 7], &[3, 6, 10]), vec![1, 1]);
+        assert_eq!(task5(&[1, 2, 3], &[1, 2, 3]), vec![0, 0]);
+    }
 
-    cmp eax, edi
-    jge no_update
+    #[test]
+    fn test_task6() {
+        assert_eq!(task6(&[1000000001, 1000000002, 1000000003]), 3000000006);
+    }
 
-    mov edx, ebx                  ; min_idx = j
+    #[test]
+    fn test_task7() {
+        let arr = vec![vec![11, 2, 4], vec![4, 5, 6], vec![10, 8, -12]];
+        assert_eq!(task7(&arr), 15);
+    }
 
-no_update:
-    inc ebx
-    jmp inner_loop
+    #[test]
+    fn test_task8() {
+        let res = task8(&[-4, 3, -9, 0, 4, 1]);
+        assert!((res[0] - 0.5).abs() < 0.01);
+        assert!((res[1] - 0.333333).abs() < 0.01);
+        assert!((res[2] - 0.166666).abs() < 0.01);
+    }
 
-inner_done:
-    ; swap arr[i] і arr[min_idx]
-    cmp edx, ecx
-    je no_swap
+    #[test]
+    fn test_task9() {
+        assert_eq!(task9(3), vec!["  #", " ##", "###"]);
+        assert_eq!(task9(1), vec!["#"]);
+    }
 
-    mov esi, num_buf
-    lea esi, [esi + ecx*4]        ; &arr[i]
-    mov edi, num_buf
-    lea edi, [edi + edx*4]        ; &arr[min_idx]
+    #[test]
+    fn test_task10() {
+        assert_eq!(task10(&[1, 3, 5, 7, 9]), (16, 24));
+    }
 
-    mov eax, [esi]
-    mov ebx, [edi]
-    mov [esi], ebx
-    mov [edi], eax
+    #[test]
+    fn test_task11() {
+        assert_eq!(task11(&[3, 2, 1, 3]), 2);
+        assert_eq!(task11(&[1, 1, 1]), 3);
+    }
 
-no_swap:
-    inc ecx
-    jmp outer_loop
+    #[test]
+    fn test_task12() {
+        assert_eq!(task12("07:05:45PM"), "19:05:45");
+        assert_eq!(task12("12:00:00AM"), "00:00:00");
+        assert_eq!(task12("12:00:00PM"), "12:00:00");
+    }
 
-sort_done:
+    #[test]
+    fn test_task13() {
+        assert_eq!(task13(&[73, 67, 38, 33]), vec![75, 67, 40, 33]);
+    }
 
-    ; ========================================
-    ; I/O: вивід відсортованого масиву
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, sort_msg
-    mov edx, sort_len
-    int 0x80
+    #[test]
+    fn test_task14() {
+        assert_eq!(task14(7, 11, 5, 15, &[-2, 2, 1], &[5, -6]), (1, 1));
+    }
 
-    call print_array
+    #[test]
+    fn test_task15() {
+        assert_eq!(task15(0, 3, 4, 2), "YES");
+        assert_eq!(task15(0, 2, 5, 3), "NO");
+        assert_eq!(task15(0, 0, 0, 0), "YES");
+    }
+}
 
-    ; ========================================
-    ; MATH + LOGIC: обчислення медіани
-    ; ========================================
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, median_msg
-    mov edx, median_len
-    int 0x80
-
-    mov eax, [n]
-    test eax, 1
-    jz even_n
-
-    ; непарне n — медіана = arr[n/2]
-    shr eax, 1
-    jmp print_median
-
-even_n:
-    ; парне n — нижня медіана = arr[n/2 - 1]
-    shr eax, 1
-    dec eax
-
-print_median:
-    mov esi, num_buf
-    lea esi, [esi + eax*4]
-    mov eax, [esi]
-    call print_int
-
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, newline
-    mov edx, 1
-    int 0x80
-
-    ; ========================================
-    ; EXIT
-    ; ========================================
-    mov eax, 1
-    xor ebx, ebx
-    int 0x80
-
-; ========================================
-; MEMORY + I/O: вивід масиву
-; ========================================
-print_array:
-    push ecx
-    mov ecx, [n]
-    mov esi, num_buf
-print_loop:
-    push ecx
-    push esi
-
-    mov eax, [esi]
-    call print_int
-
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, space
-    mov edx, 1
-    int 0x80
-
-    pop esi
-    pop ecx
-    add esi, 4
-    loop print_loop
-
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, newline
-    mov edx, 1
-    int 0x80
-
-    pop ecx
-    ret
-
-; ========================================
-; MATH: перетворення числа в рядок та вивід
-; ========================================
-print_int:
-    push ebx
-    push ecx
-    push edx
-    push edi
-
-    mov edi, input_buf + 30
-    mov byte [edi], 0
-    dec edi
-
-    mov ebx, 10
-    test eax, eax
-    jnz .loop
-    mov byte [edi], '0'
-    dec edi
-    jmp .write
-
-.loop:
-    xor edx, edx
-    div ebx
-    add dl, '0'
-    mov [edi], dl
-    dec edi
-    test eax, eax
-    jnz .loop
-
-.write:
-    inc edi
-    mov esi, edi
-    xor ecx, ecx
-.len:
-    cmp byte [esi], 0
-    je .print
-    inc ecx
-    inc esi
-    jmp .len
-
-.print:
-    mov eax, 4
-    mov ebx, 1
-    int 0x80
-
-    pop edi
-    pop edx
-    pop ecx
-    pop ebx
-    ret
+fn main() {
+    println!("Практичні роботи №3-15");
+    println!("Запустіть 'cargo test' для перевірки всіх тестів");
+}
