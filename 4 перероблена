@@ -1,0 +1,21 @@
+// https://www.hackerrank.com/challenges/simple-array-sum/problem
+pub fn simple_array_sum(ar: &[i32]) -> i32 {
+    ar.iter().sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test0() {
+        let ar = vec![1, 2, 3, 4, 10, 11];
+        assert_eq!(simple_array_sum(&ar), 31);
+    }
+
+    #[test]
+    fn test_empty() {
+        let ar: Vec<i32> = vec![];
+        assert_eq!(simple_array_sum(&ar), 0);
+    }
+}
