@@ -1,0 +1,219 @@
+// ==================== ПРАКТИЧНА №3 ====================
+fn task3(s: &str) -> usize {
+    s.chars().filter(|c| matches!(c, 'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U')).count()
+}
+
+// ==================== ПРАКТИЧНА №4 ====================
+fn task4(arr: &[i32]) -> i32 {
+    arr.iter().sum()
+}
+
+// ==================== ПРАКТИЧНА №5 ====================
+fn task5(n: u32) -> u32 {
+    (1..=n).product()
+}
+
+// ==================== ПРАКТИЧНА №6 ====================
+fn task6(n: u32) -> u32 {
+    match n {
+        0 => 0,
+        1 => 1,
+        _ => {
+            let mut a = 0;
+            let mut b = 1;
+            for _ in 2..=n {
+                let c = a + b;
+                a = b;
+                b = c;
+            }
+            b
+        }
+    }
+}
+
+// ==================== ПРАКТИЧНА №7 ====================
+fn task7(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    let (mut i, mut j) = (0, bytes.len().saturating_sub(1));
+    while i < j {
+        if bytes[i] != bytes[j] {
+            return false;
+        }
+        i += 1;
+        j -= 1;
+    }
+    true
+}
+
+// ==================== ПРАКТИЧНА №8 ====================
+fn task8(n: u32) -> bool {
+    if n < 2 {
+        return false;
+    }
+    for i in 2..=(n as f64).sqrt() as u32 {
+        if n % i == 0 {
+            return false;
+        }
+    }
+    true
+}
+
+// ==================== ПРАКТИЧНА №9 ====================
+fn task9(arr: &mut [i32]) {
+    for i in 0..arr.len() {
+        for j in 0..arr.len() - i - 1 {
+            if arr[j] > arr[j + 1] {
+                arr.swap(j, j + 1);
+            }
+        }
+    }
+}
+
+// ==================== ПРАКТИЧНА №10 ====================
+use std::collections::HashMap;
+fn task10(arr: &[i32]) -> Vec<i32> {
+    let mut seen = HashMap::new();
+    let mut result = Vec::new();
+    for &x in arr {
+        if !seen.contains_key(&x) {
+            seen.insert(x, true);
+            result.push(x);
+        }
+    }
+    result
+}
+
+// ==================== ПРАКТИЧНА №11 ====================
+fn task11(s: &str) -> String {
+    s.to_lowercase()
+}
+
+// ==================== ПРАКТИЧНА №12 ====================
+fn task12(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+// ==================== ПРАКТИЧНА №13 ====================
+fn task13(n: i32) -> String {
+    match n % 2 {
+        0 => "Even".to_string(),
+        _ => "Odd".to_string(),
+    }
+}
+
+// ==================== ПРАКТИЧНА №14 ====================
+fn task14(arr: &[i32]) -> i32 {
+    *arr.iter().max().unwrap_or(&0)
+}
+
+// ==================== ПРАКТИЧНА №15 ====================
+fn task15(arr: &[i32], target: i32) -> Option<usize> {
+    arr.iter().position(|&x| x == target)
+}
+
+// ==================== ТЕСТИ ====================
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_task3() {
+        assert_eq!(task3("hello"), 2);
+        assert_eq!(task3("world"), 1);
+        assert_eq!(task3("AEIOU"), 5);
+    }
+
+    #[test]
+    fn test_task4() {
+        assert_eq!(task4(&[1, 2, 3, 4, 5]), 15);
+        assert_eq!(task4(&[]), 0);
+        assert_eq!(task4(&[-1, 1]), 0);
+    }
+
+    #[test]
+    fn test_task5() {
+        assert_eq!(task5(5), 120);
+        assert_eq!(task5(0), 1);
+        assert_eq!(task5(1), 1);
+    }
+
+    #[test]
+    fn test_task6() {
+        assert_eq!(task6(0), 0);
+        assert_eq!(task6(1), 1);
+        assert_eq!(task6(10), 55);
+    }
+
+    #[test]
+    fn test_task7() {
+        assert_eq!(task7("racecar"), true);
+        assert_eq!(task7("hello"), false);
+        assert_eq!(task7("a"), true);
+        assert_eq!(task7(""), true);
+    }
+
+    #[test]
+    fn test_task8() {
+        assert_eq!(task8(2), true);
+        assert_eq!(task8(17), true);
+        assert_eq!(task8(4), false);
+        assert_eq!(task8(1), false);
+    }
+
+    #[test]
+    fn test_task9() {
+        let mut arr = [3, 1, 4, 1, 5];
+        task9(&mut arr);
+        assert_eq!(arr, [1, 1, 3, 4, 5]);
+        
+        let mut arr2 = [1];
+        task9(&mut arr2);
+        assert_eq!(arr2, [1]);
+    }
+
+    #[test]
+    fn test_task10() {
+        assert_eq!(task10(&[1, 2, 2, 3, 3, 3]), vec![1, 2, 3]);
+        assert_eq!(task10(&[]), Vec::<i32>::new());
+        assert_eq!(task10(&[1, 1, 1]), vec![1]);
+    }
+
+    #[test]
+    fn test_task11() {
+        assert_eq!(task11("HeLLo"), "hello");
+        assert_eq!(task11("RUST"), "rust");
+        assert_eq!(task11(""), "");
+    }
+
+    #[test]
+    fn test_task12() {
+        assert_eq!(task12(5, 3), 8);
+        assert_eq!(task12(-1, 1), 0);
+    }
+
+    #[test]
+    fn test_task13() {
+        assert_eq!(task13(4), "Even");
+        assert_eq!(task13(7), "Odd");
+        assert_eq!(task13(0), "Even");
+    }
+
+    #[test]
+    fn test_task14() {
+        assert_eq!(task14(&[1, 5, 3, 9, 2]), 9);
+        assert_eq!(task14(&[42]), 42);
+        assert_eq!(task14(&[]), 0);
+    }
+
+    #[test]
+    fn test_task15() {
+        assert_eq!(task15(&[1, 2, 3, 4, 5], 3), Some(2));
+        assert_eq!(task15(&[1, 2, 3, 4, 5], 6), None);
+        assert_eq!(task15(&[], 1), None);
+    }
+}
+
+fn main() {
+    println!("Практичні роботи №3-15");
+    println!("Запустіть 'cargo test' для перевірки");
+}
