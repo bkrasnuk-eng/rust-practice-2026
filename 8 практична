@@ -1,0 +1,39 @@
+// https://www.hackerrank.com/challenges/staircase/problem
+
+pub fn staircase(n: i32) {
+    for i in 1..=n {
+        let spaces = " ".repeat((n - i) as usize);
+        let hashes = "#".repeat(i as usize);
+        println!("{}{}", spaces, hashes);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sample_input_4() {
+        // Перевіряємо, що функція не падає (HackerRank використовує stdout)
+        let result = std::panic::catch_unwind(|| {
+            staircase(4);
+        });
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_sample_input_6() {
+        let result = std::panic::catch_unwind(|| {
+            staircase(6);
+        });
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_n_1() {
+        let result = std::panic::catch_unwind(|| {
+            staircase(1);
+        });
+        assert!(result.is_ok());
+    }
+}
