@@ -1,0 +1,21 @@
+// HackerRank: Назва задачі
+// https://www.hackerrank.com/challenges/...
+
+pub fn function_name(params: ...) -> ... {
+    // чиста реалізація
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sample() {
+        // sample input з умови
+    }
+
+    #[test]
+    fn test_edge_cases() {
+        // додаткові тести
+    }
+}
